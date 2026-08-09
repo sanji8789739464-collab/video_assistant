@@ -4,7 +4,6 @@
 # ── Audio / Video acquisition ─────────────────────────────────────────────
 yt-dlp
 pydub
-pyaudioop
 ffmpeg-python
 
 # ── Speech-to-Text (local Whisper) ────────────────────────────────────────
