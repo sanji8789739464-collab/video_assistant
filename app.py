@@ -447,9 +447,10 @@ if st.session_state.result is None:
     with col_mid:
         source = st.text_input(
             "Source",
-            placeholder="Paste a YouTube URL or local file path",
+            placeholder="Paste a YouTube URL",
             label_visibility="collapsed",
         )
+        uploaded_file = st.file_uploader("Or upload an audio/video file directly to bypass YouTube blocks", type=["mp4", "mp3", "wav", "m4a", "webm", "mov"])
 
         lang_col, btn_col = st.columns([1, 1])
         with lang_col:
@@ -463,14 +464,22 @@ if st.session_state.result is None:
             process_btn = st.button("Process →", use_container_width=True)
 
         # ── Run the pipeline ──
-        if process_btn and source.strip():
+        if process_btn and (source.strip() or uploaded_file):
             st.session_state.processing = True
 
             progress = st.empty()
 
             with st.status("Processing your video…", expanded=True) as status:
                 st.write("⏳  Extracting audio…")
-                chunks = process_audio_file(source.strip())
+                if uploaded_file:
+                    import os
+                    os.makedirs("downloads", exist_ok=True)
+                    temp_path = os.path.join("downloads", uploaded_file.name)
+                    with open(temp_path, "wb") as f:
+                        f.write(uploaded_file.getbuffer())
+                    chunks = process_audio_file(temp_path)
+                else:
+                    chunks = process_audio_file(source.strip())
 
                 st.write("⏳  Transcribing audio…")
                 transcript = transcribe_all(chunks, language)
@@ -507,8 +516,8 @@ if st.session_state.result is None:
             st.session_state.processing = False
             st.rerun()
 
-        elif process_btn and not source.strip():
-            st.warning("Please enter a YouTube URL or file path.")
+        elif process_btn and not (source.strip() or uploaded_file):
+            st.warning("Please enter a YouTube URL or upload a file.")
 
 
 # ─── Results ─────────────────────────────────────────────────────────────────
